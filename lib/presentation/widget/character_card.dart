@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:rick_and_morty/domain/entities/character_entities.dart';
 
+/// Виджет карточки персонажа для отображения в списке
+/// Отображает основную информацию о персонаже и кнопку добавления в избранное
 class CharacterCard extends StatelessWidget {
+  /// Данные персонажа для отображения
   final CharacterEntities character;
-  final void Function() onFavoriteToggle; // опционально
+
+  /// Колбэк для переключения статуса "избранное"
+  final void Function() onFavoriteToggle;
 
   const CharacterCard({
     super.key,
@@ -15,18 +20,24 @@ class CharacterCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.all(6), // ← margin 6 со всех сторон
-      clipBehavior: Clip.hardEdge, // чтобы изображение не вылезало за границы Card
+      // Отступы вокруг карточки
+      margin: const EdgeInsets.all(6),
+      // Обрезка содержимого по границам карточки
+      clipBehavior: Clip.hardEdge,
       child: SizedBox(
-        height: 120, // фиксированная высота карточки (настройте по вкусу)
+        // Фиксированная высота карточки
+        height: 120,
         child: Row(
           children: [
-            // Изображение — занимает всю высоту карточки
+            // Контейнер для изображения персонажа
             SizedBox(
               width: 120,
               child: CachedNetworkImage(
+                // Ссылка на изображение персонажа
                 imageUrl: character.imageUrl,
+                // Растягиваем изображение по ширине контейнера
                 fit: BoxFit.fitWidth,
+                // Отображаем индикатор загрузки пока изображение грузится
                 placeholder: (context, url) => const Center(
                   child: SizedBox(
                     width: 20,
@@ -34,20 +45,28 @@ class CharacterCard extends StatelessWidget {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 ),
-                errorWidget: (context, url, error) => const Center(child: Icon(Icons.error)),
+                // Отображаем иконку ошибки при проблемах с загрузкой
+                errorWidget: (context, url, error) =>
+                    const Center(child: Icon(Icons.error)),
+                // Заголовки для HTTP-запроса (обход ограничений некоторых серверов)
                 httpHeaders: const {'User-Agent': 'Mozilla/5.0'},
+                // Кэшируем изображение с уменьшенным разрешением для оптимизации
                 memCacheWidth: 100,
-                memCacheHeight: 120, // ≈ высота карточки
+                memCacheHeight: 120,
               ),
             ),
-            // Контент справа
+            // Текстовая информация о персонаже
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    // Имя персонажа жирным шрифтом
                     Text(
                       character.name,
                       style: const TextStyle(fontWeight: FontWeight.bold),
@@ -55,18 +74,24 @@ class CharacterCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
+                    // Статус персонажа
                     Text('Статус: ${character.status}'),
+                    // Вид персонажа
                     Text('Вид: ${character.species}'),
+                    // Локация персонажа
                     Text('Локация: ${character.locationName}'),
                   ],
                 ),
               ),
             ),
-            // Звёздочка
+            // Кнопка добавления/удаления из избранного
+            // Отображается только если передан колбэк
             if (onFavoriteToggle != null)
               IconButton(
                 icon: Icon(
+                  // Меняем иконку в зависимости от статуса избранного
                   character.isFavorite ? Icons.star : Icons.star_border,
+                  // Золотой цвет для активного состояния избранного
                   color: character.isFavorite ? Colors.amber : null,
                 ),
                 onPressed: onFavoriteToggle,

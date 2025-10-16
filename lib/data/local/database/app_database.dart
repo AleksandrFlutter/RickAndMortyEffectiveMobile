@@ -12,15 +12,22 @@ import 'package:rick_and_morty/domain/entities/character_entities.dart';
 
 part 'app_database.g.dart';
 
+/// Основная база данных приложения, объединяющая все таблицы
+/// Использует Drift (ранее Moor) для типобезопасной работы с SQLite
 @DriftDatabase(tables: [CharactersDao, FavoritesDao, ThemeSettingsDao])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
+  /// Версия схемы базы данных (для миграций)
   @override
   int get schemaVersion => 1;
 
   // !---------------------------------------------------------
-  // Все персонажи (для главного экрана)
+  // РЕАКТИВНЫЕ МЕТОДЫ (Stream) — для автоматического обновления UI при изменении данных
+
+  /// Возвращает Stream со всеми персонажами, отсортированными по ID
+  /// Используется на главном экране для реактивного обновления списка
+  /// (например, при переключении избранного на другом экране)
   Stream<List<CharacterEntities>> watchAllCharactersSortedById() {
     return (select(charactersDao)..orderBy([(c) => OrderingTerm.asc(c.id)]))
         .join([
@@ -29,10 +36,11 @@ class AppDatabase extends _$AppDatabase {
             favoritesDao.characterId.equalsExp(charactersDao.id),
           ),
         ])
-        .watch()
+        .watch() // ← ключевой метод для реактивности
         .map(
           (rows) => rows.map((row) {
             final char = row.readTable(charactersDao);
+            // Проверяем наличие записи в таблице избранного
             final isFav = row.readTableOrNull(favoritesDao) != null;
             return CharacterEntities(
               id: char.id,
@@ -47,7 +55,8 @@ class AppDatabase extends _$AppDatabase {
         );
   }
 
-  // Только избранные (для экрана "Избранное")
+  /// Возвращает Stream только с избранными персонажами, отсортированными по имени
+  /// Используется на экране "Избранное"
   Stream<List<CharacterEntities>> watchFavoriteCharacters() {
     return (select(charactersDao)..orderBy([(c) => OrderingTerm.asc(c.name)]))
         .join([
@@ -67,7 +76,7 @@ class AppDatabase extends _$AppDatabase {
               species: char.species,
               locationName: char.locationName,
               imageUrl: char.imageUrl,
-              isFavorite: true,
+              isFavorite: true, // всегда true для избранных
             );
           }).toList(),
         );
@@ -75,11 +84,15 @@ class AppDatabase extends _$AppDatabase {
 
   //---------------------------------------------------------------
 
-  // Сохранение персонажей (без избранного)
+  // НЕРЕАКТИВНЫЕ МЕТОДЫ (Future) — для первоначальной загрузки и фоновых операций
+
+  /// Сохраняет список персонажей в базу данных (upsert — обновление или вставка)
+  /// Используется при первоначальной загрузке данных с API
   Future<void> upsertCharacters(List<CharacterEntities> chars) async {
     debugPrint('chars = ${chars.length}');
 
     try {
+      // Вставка по одному (можно оптимизировать через batch)
       for (final c in chars) {
         await into(charactersDao).insertOnConflictUpdate(
           CharactersDaoCompanion(
@@ -97,20 +110,18 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
-  // Получить всех с флагом isFavorite
+  /// Получает всех персонажей из БД (без реактивности)
+  /// Используется в репозитории как fallback при ошибке сети
   Future<List<CharacterEntities>> getAllCharactersSortedById() async {
     final rows =
         await (select(
           charactersDao,
-        )..orderBy([(c) => OrderingTerm(expression: c.id)])).join([
+        )..orderBy([(c) => OrderingTerm.asc(c.id)])).join([
           leftOuterJoin(
             favoritesDao,
             favoritesDao.characterId.equalsExp(charactersDao.id),
           ),
         ]).get();
-
-    //debugPrint(' ${rows.length}');
-    //debugPrint(' ${rows.toString()}');
 
     try {
       return rows.map((row) {
@@ -130,11 +141,11 @@ class AppDatabase extends _$AppDatabase {
     } catch (e) {
       debugPrint('Ошибка ${e.toString()}');
     }
-    List<CharacterEntities> r = [];
-    return r;
+    return [];
   }
 
-  // Переключить избранное
+  /// Переключает статус избранного для персонажа
+  /// Удаляет из таблицы favorites, если запись существует, иначе добавляет
   Future<void> toggleFavorite(int characterId) async {
     final exists = await (select(
       favoritesDao,
@@ -150,34 +161,24 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
+  // !---------------------------------------------------------
+  // МЕТОДЫ ДЛЯ РАБОТЫ С НАСТРОЙКАМИ (ТЕМА)
+
+  /// Получает текущий режим темы из БД
   Future<bool> getIsDarkMode() async {
     final rows = await (select(themeSettingsDao)..limit(1)).get();
-    debugPrint(rows.toString());
     return rows.isNotEmpty ? rows.first.isDarkMode : false;
   }
 
+  /// Сохраняет режим темы в БД (использует фиксированный ID = 1)
   Future<void> setDarkMode(bool isDark) async {
     await into(themeSettingsDao).insertOnConflictUpdate(
       ThemeSettingsDaoCompanion(id: Value(1), isDarkMode: Value(isDark)),
     );
   }
 
-  Future<void> insertCharacters(List<CharacterEntities> chars) async {
-    await into(charactersDao).insertOnConflictUpdate(
-      chars.map(
-            (c) => CharactersDaoCompanion(
-              id: Value(c.id),
-              name: Value(c.name),
-              status: Value(c.status),
-              species: Value(c.species),
-              locationName: Value(c.locationName),
-              imageUrl: Value(c.imageUrl),
-            ),
-          )
-          as Insertable<CharactersDaoData>,
-    );
-  }
-
+  /// Получает только избранных персонажей (без реактивности)
+  /// Может быть заменён вызовом watchFavoriteCharacters().first
   Future<List<CharacterEntities>> getFavoriteCharacters() async {
     final rows =
         await (select(
@@ -204,6 +205,8 @@ class AppDatabase extends _$AppDatabase {
   }
 }
 
+/// Создаёт подключение к SQLite-базе в фоновом потоке
+/// Файл базы хранится в директории приложения
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dir = await getApplicationDocumentsDirectory();
