@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:rick_and_morty/core/constant/app_strings.dart';
 import 'package:rick_and_morty/presentation/screens/favorites/bloc/favorites_bloc.dart';
 import 'package:rick_and_morty/presentation/screens/favorites/bloc/favorites_event.dart';
 import 'package:rick_and_morty/presentation/screens/favorites/bloc/favorites_state.dart';
@@ -15,11 +16,11 @@ void showSortDialog(BuildContext context, FavoritesSortBy currentSort) {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Сортировать по:', style: TextStyle(fontSize: 18)),
+            const Text('${AppStrings.sort}:', style: TextStyle(fontSize: 18)),
             const SizedBox(height: 12),
             ...FavoritesSortBy.values.map((sortOption) {
               return RadioListTile<FavoritesSortBy>(
-                title: Text('По ${sortOption.label}'),
+                title: Text('${AppStrings.sortBy} ${sortOption.label}'),
                 value: sortOption,
                 groupValue: currentSort,
                 onChanged: (value) {

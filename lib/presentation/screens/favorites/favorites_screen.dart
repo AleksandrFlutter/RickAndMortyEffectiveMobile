@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:rick_and_morty/core/constant/app_strings.dart';
 import 'package:rick_and_morty/presentation/screens/favorites/bloc/favorites_bloc.dart';
 import 'package:rick_and_morty/presentation/screens/favorites/bloc/favorites_event.dart';
 import 'package:rick_and_morty/presentation/screens/favorites/bloc/favorites_state.dart';
@@ -28,7 +29,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Избранное')),
+      appBar: AppBar(title: const Text(AppStrings.favorites)),
       body: BlocBuilder<FavoritesBloc, FavoritesState>(
         builder: (context, state) {
           // Показываем индикатор загрузки
@@ -38,7 +39,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           // Показываем сообщение, если избранных нет
           else if (state is FavoritesEmpty ||
               (state is FavoritesLoaded && state.characters.isEmpty)) {
-            return const Center(child: Text('Нет избранных персонажей'));
+            return const Center(child: Text(AppStrings.noFavorites));
           }
           // Отображаем список избранных персонажей
           else if (state is FavoritesLoaded) {

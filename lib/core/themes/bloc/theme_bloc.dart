@@ -5,36 +5,39 @@ import 'package:rick_and_morty/core/themes/theme_mode.dart';
 import 'package:rick_and_morty/repository/settings_repository.dart';
 
 part 'theme_event.dart';
-
 part 'theme_state.dart';
 
+/// BLoC для управления темой приложения (светлая/тёмная)
+/// Обеспечивает загрузку текущей темы при старте и сохранение выбора пользователя
 class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
+  /// Репозиторий для работы с настройками темы в локальной базе данных
   final SettingsRepository _settingsRepository;
 
   ThemeBloc(this._settingsRepository) : super(ThemeState.initial()) {
-    on<ThemeChanged>(_onThemeChanged);
-    _loadThemeFromDb();
+    // Регистрация обработчиков событий
+    on<ThemeChanged>(_onThemeChanged); // Обработка изменения темы пользователем
+    on<ThemeInit>(_onInit);           // Инициализация темы при запуске приложения
   }
 
-  Future<void> _loadThemeFromDb() async {
+  /// Обработчик события инициализации темы
+  /// Загружает сохранённый режим темы из локальной базы данных
+  Future<void> _onInit(ThemeInit event, Emitter<ThemeState> emit) async {
+    // Получаем текущее состояние темы из репозитория
     final isDark = await _settingsRepository.isDarkModeEnabled();
-    debugPrint('$isDark');
-    final mode = isDark ? AppThemeMode.dark : AppThemeMode.light;
-    debugPrint('$mode');
-    emit(ThemeState(mode: mode));
+    // Эмитим состояние с соответствующим режимом темы
+    emit(ThemeState(mode: isDark ? AppThemeMode.dark : AppThemeMode.light));
   }
 
+  /// Обработчик события изменения темы пользователем
   Future<void> _onThemeChanged(
-    ThemeChanged event,
-    Emitter<ThemeState> emit,
-  ) async {
-    debugPrint('_onThemeChanged ${event.isDark}');
-
+      ThemeChanged event,
+      Emitter<ThemeState> emit,
+      ) async {
+    // Определяем новый режим темы на основе входного параметра
     final newMode = event.isDark ? AppThemeMode.dark : AppThemeMode.light;
-
-    debugPrint('_onThemeChanged newMode = $newMode');
-
+    // Сохраняем выбор пользователя в локальной базе данных
     await _settingsRepository.setDarkMode(event.isDark);
+    // Эмитим новое состояние темы
     emit(ThemeState(mode: newMode));
   }
 }

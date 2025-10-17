@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:rick_and_morty/core/constant/app_strings.dart';
 import 'package:rick_and_morty/domain/entities/character_entities.dart';
 
 /// Перечисление доступных критериев сортировки для экрана "Избранное"
@@ -12,13 +13,13 @@ enum FavoritesSortBy {
   String get label {
     switch (this) {
       case FavoritesSortBy.name:
-        return 'Имени';
+        return AppStrings.sortByName;
       case FavoritesSortBy.location:
-        return 'Локации';
+        return AppStrings.location;
       case FavoritesSortBy.status:
-        return 'Статусу';
+        return AppStrings.status;
       case FavoritesSortBy.species:
-        return 'Виду';
+        return AppStrings.species;
     }
   }
 }

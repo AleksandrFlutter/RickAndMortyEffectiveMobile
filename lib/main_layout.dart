@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rick_and_morty/bloc/navigation_bloc.dart';
 import 'package:rick_and_morty/bloc/navigation_event.dart';
 import 'package:rick_and_morty/bloc/navigation_state.dart';
+import 'package:rick_and_morty/core/constant/app_strings.dart';
 import 'presentation/screens/characters/characters_screen.dart';
 import 'presentation/screens/favorites/favorites_screen.dart';
 import 'presentation/screens/settings/settings_screen.dart';
@@ -43,14 +44,17 @@ class MainLayout extends StatelessWidget {
             },
             // Определяем элементы нижней панели навигации
             items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Список'),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.list),
+                label: AppStrings.navCharacters,
+              ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.star),
-                label: 'Избранное',
+                label: AppStrings.navFavorites,
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.settings),
-                label: 'Настройки',
+                label: AppStrings.navSettings,
               ),
             ],
           ),
@@ -67,11 +71,7 @@ class MainLayout extends StatelessWidget {
       index: currentIndex,
       // Все три экрана остаются в памяти, что предотвращает потерю состояния
       // (например, позиции скролла в списке персонажей или данных в избранном)
-      children: const [
-        CharactersScreen(),
-        FavoritesScreen(),
-        SettingsScreen(),
-      ],
+      children: const [CharactersScreen(), FavoritesScreen(), SettingsScreen()],
     );
   }
 }

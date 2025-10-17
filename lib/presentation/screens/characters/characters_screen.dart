@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:rick_and_morty/core/constant/app_strings.dart';
 import 'package:rick_and_morty/presentation/screens/characters/bloc/characters_bloc.dart';
 import 'package:rick_and_morty/presentation/screens/characters/bloc/characters_event.dart';
 import 'package:rick_and_morty/presentation/screens/characters/bloc/characters_state.dart';
@@ -62,7 +63,7 @@ class _CharactersScreenState extends State<CharactersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Персонажи')),
+      appBar: AppBar(title: const Text(AppStrings.characters)),
       body: BlocBuilder<CharactersBloc, CharactersState>(
         builder: (context, state) {
           // Показываем индикатор загрузки только при первоначальной загрузке (страница 1)
@@ -104,8 +105,8 @@ class _CharactersScreenState extends State<CharactersScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Не удалось загрузить персонажей'),
-                  Text('Ошибка: ${state.message}'),
+                  const Text(AppStrings.errorLoadingCharacters),
+                  Text('${AppStrings.error}: ${state.message}'),
                 ],
               ),
             );

@@ -50,7 +50,9 @@ class MyApp extends StatelessWidget {
         // BLoC для управления избранными персонажами
         BlocProvider(create: (context) => FavoritesBloc(characterRepository)),
         // BLoC для управления темой приложения (светлая/тёмная)
-        BlocProvider(create: (context) => ThemeBloc(settingsRepository)),
+        BlocProvider(
+          create: (context) => ThemeBloc(settingsRepository)..add(ThemeInit()),
+        ),
         // BLoC для навигации между экранами (BottomNavigationBar)
         BlocProvider(create: (context) => NavigationBloc()),
       ],

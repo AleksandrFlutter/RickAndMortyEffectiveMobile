@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:rick_and_morty/core/constant/app_strings.dart';
 import 'package:rick_and_morty/domain/entities/character_entities.dart';
 
 /// Виджет карточки персонажа для отображения в списке
@@ -75,11 +76,11 @@ class CharacterCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     // Статус персонажа
-                    Text('Статус: ${character.status}'),
+                    Text('${AppStrings.status}: ${character.status}'),
                     // Вид персонажа
-                    Text('Вид: ${character.species}'),
+                    Text('${AppStrings.species}: ${character.species}'),
                     // Локация персонажа
-                    Text('Локация: ${character.locationName}'),
+                    Text('${AppStrings.location}: ${character.locationName}'),
                   ],
                 ),
               ),
