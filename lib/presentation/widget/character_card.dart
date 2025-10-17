@@ -8,7 +8,7 @@ class CharacterCard extends StatelessWidget {
   /// Данные персонажа для отображения
   final CharacterEntities character;
 
-  /// Колбэк для переключения статуса "избранное"
+  /// Колб эк для переключения статуса "избранное"
   final void Function() onFavoriteToggle;
 
   const CharacterCard({
@@ -84,18 +84,17 @@ class CharacterCard extends StatelessWidget {
                 ),
               ),
             ),
+
             // Кнопка добавления/удаления из избранного
-            // Отображается только если передан колбэк
-            if (onFavoriteToggle != null)
-              IconButton(
-                icon: Icon(
-                  // Меняем иконку в зависимости от статуса избранного
-                  character.isFavorite ? Icons.star : Icons.star_border,
-                  // Золотой цвет для активного состояния избранного
-                  color: character.isFavorite ? Colors.amber : null,
-                ),
-                onPressed: onFavoriteToggle,
+            IconButton(
+              icon: Icon(
+                // Меняем иконку в зависимости от статуса избранного
+                character.isFavorite ? Icons.star : Icons.star_border,
+                // Золотой цвет для активного состояния избранного
+                color: character.isFavorite ? Colors.amber : null,
               ),
+              onPressed: onFavoriteToggle,
+            ),
           ],
         ),
       ),

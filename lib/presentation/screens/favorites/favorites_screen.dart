@@ -3,8 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rick_and_morty/presentation/screens/favorites/bloc/favorites_bloc.dart';
 import 'package:rick_and_morty/presentation/screens/favorites/bloc/favorites_event.dart';
 import 'package:rick_and_morty/presentation/screens/favorites/bloc/favorites_state.dart';
+import 'package:rick_and_morty/presentation/screens/favorites/widget/show_sort_dialog.dart';
 import 'package:rick_and_morty/presentation/widget/character_card.dart';
 
+/// Экран "Избранное" — отображает список персонажей, добавленных в избранное
+/// Поддерживает сортировку, удаление и реактивные обновления
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
 
@@ -16,7 +19,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   void initState() {
     super.initState();
-    // Запрашиваем избранное при открытии экрана
+    // Подписываемся на реактивные обновления из БД и запрашиваем начальные данные
     final favoritesBloc = context.read<FavoritesBloc>();
     favoritesBloc.add(FavoritesWatch());
     favoritesBloc.add(FavoritesLoadRequested());
@@ -28,19 +31,23 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       appBar: AppBar(title: const Text('Избранное')),
       body: BlocBuilder<FavoritesBloc, FavoritesState>(
         builder: (context, state) {
+          // Показываем индикатор загрузки
           if (state is FavoritesLoading) {
             return const Center(child: CircularProgressIndicator());
-          } else if (state is FavoritesEmpty) {
+          }
+          // Показываем сообщение, если избранных нет
+          else if (state is FavoritesEmpty ||
+              (state is FavoritesLoaded && state.characters.isEmpty)) {
             return const Center(child: Text('Нет избранных персонажей'));
-          } else if (state is FavoritesLoaded) {
-            if (state.characters.isEmpty) {
-              return const Center(child: Text('Нет избранных персонажей'));
-            }
+          }
+          // Отображаем список избранных персонажей
+          else if (state is FavoritesLoaded) {
             return ListView.builder(
               itemCount: state.characters.length,
               itemBuilder: (context, index) {
+                final character = state.characters[index];
                 return Dismissible(
-                  key: Key(state.characters[index].id.toString()),
+                  key: Key(character.id.toString()),
                   direction: DismissDirection.endToStart,
                   background: Container(
                     color: Colors.red,
@@ -49,69 +56,40 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     child: const Icon(Icons.delete, color: Colors.white),
                   ),
                   onDismissed: (_) {
+                    // Удаляем персонажа из избранного при свайпе
                     context.read<FavoritesBloc>().add(
-                      FavoritesRemoveFromFavorite(state.characters[index].id),
+                      FavoritesRemoveFromFavorite(character.id),
                     );
                   },
                   child: CharacterCard(
-                    character: state.characters[index],
+                    character: character,
+                    // При нажатии на звёздочку — удаляем из избранного
                     onFavoriteToggle: () {
                       context.read<FavoritesBloc>().add(
-                        FavoritesRemoveFromFavorite(state.characters[index].id),
+                        FavoritesRemoveFromFavorite(character.id),
                       );
                     },
                   ),
                 );
               },
             );
-          } else {
+          }
+          // Для остальных состояний (например, FavoritesInitial) — пустой контейнер
+          else {
             return const SizedBox();
           }
         },
       ),
+      // Плавающая кнопка для вызова диалога сортировки
       floatingActionButton: BlocBuilder<FavoritesBloc, FavoritesState>(
         builder: (context, state) {
           if (state is! FavoritesLoaded) return const SizedBox();
           return FloatingActionButton(
-            onPressed: () => _showSortDialog(context, state.sortBy),
+            onPressed: () => showSortDialog(context, state.sortBy),
             child: const Icon(Icons.sort),
           );
         },
       ),
-    );
-  }
-
-  void _showSortDialog(BuildContext context, FavoritesSortBy currentSort) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Сортировать по:', style: TextStyle(fontSize: 18)),
-              const SizedBox(height: 12),
-              ...FavoritesSortBy.values.map((sortOption) {
-                return RadioListTile<FavoritesSortBy>(
-                  title: Text('По ${sortOption.label}'),
-                  value: sortOption,
-                  groupValue: currentSort,
-                  onChanged: (value) {
-                    if (value != null) {
-                      Navigator.pop(context);
-                      context.read<FavoritesBloc>().add(
-                        FavoritesSortChanged(value),
-                      );
-                    }
-                  },
-                );
-              }),
-            ],
-          ),
-        );
-      },
     );
   }
 }
